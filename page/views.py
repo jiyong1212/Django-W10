@@ -21,14 +21,15 @@ def posting_list(request):
 # [Create] 글 작성하기
 def posting_create(request):
     # [코드 작성] 웹 페이지에 로그인이 되어있는 경우만 글 쓰기가 가능하도록 조건문 작성
-    
+    if request.user.is_authenticated:
     if request.method == 'POST':
         posting_form = PostingForm(request.POST)
         
         if posting_form.is_valid():
             # [코드 작성] posting_form을 임시저장
             # [코드 작성] posting_form의 author에 작성자 객체 추가
-
+            posting_form = posting_form.save(commit = False)
+            posting_form.author = request.user
             posting_form.save()
             return redirect('page:posting_list')
     else:
@@ -40,7 +41,7 @@ def posting_create(request):
     }
     return render(request, 'page/posting_form.html', context)
     # [코드 작성] 로그인이 되어있지 않은 경우 로그인 페이지로 돌아가도록 처리
-    
+    return redirect('account:login')
 
 # [Read & Create] 작성글 보기 & 댓글 작성
 def posting_detail(request, posting_id):
@@ -53,7 +54,7 @@ def posting_detail(request, posting_id):
             comment_form = comment_form.save(commit=False)
             comment_form.posting = posting
             # [코드 작성] comment_form의 author에 작성자 객체 추가
-
+            comment_form.author = request.user
             comment_form.save()
             return redirect('page:posting_detail', posting_id)
     else :
@@ -74,7 +75,7 @@ def posting_detail(request, posting_id):
 def posting_update(request, posting_id):
     posting = get_object_or_404(Posting, id=posting_id)
     # [코드 작성] 글(posting) 작성자(author)가 로그인한 사람(request.user)과 같을 경우에만 글 수정이 가능하도록 조건문 작성
-
+    if posting.author == request.user:
     if request.method == 'POST':
         posting_form = PostingForm(request.POST, instance=posting)
 
@@ -91,7 +92,7 @@ def posting_update(request, posting_id):
     }
     return render(request, 'page/posting_form.html', context)
     # [코드 작성] posting_id에 해당하는 페이지로 redirect
-
+    return redirect('page:posting_detail',posthig_id)
 
 # [Delete] 작성글 삭제
 # [코드 작성] login_required 데코레이션 추가
